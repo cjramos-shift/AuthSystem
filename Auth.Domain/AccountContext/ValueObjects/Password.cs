@@ -14,26 +14,25 @@ public class Password : ValueObject
     {
         if (string.IsNullOrEmpty(password))
             throw new ArgumentNullException(nameof(password), "Senha não pode ser vazia!");
-        if (!ValidateCredential(password))
-            throw new InvalidDataException("A senha não segue os padrões impostos para ser considerada forte!");
 
-        Guid passwordCript = Guid.NewGuid();
-
-        PasswordHash = password;
+        PasswordHash = BCrypt.Net.BCrypt.HashPassword(password);
     }
 
     public string PasswordHash { get; }
 
-    public static bool ValidateCredential(string password)
+    public static void ValidateCredential(string password)
     {
         if (password.Length < 6)
-            return false;
+            throw new InvalidDataException("A senha não segue os padrões impostos para ser considerada forte!");
 
         bool hasUpperCase = Regex.IsMatch(password, "[A-Z]");
         bool hasLowerCase = Regex.IsMatch(password, "[a-z]");
         bool hasDigit = Regex.IsMatch(password, "[0-9]");
         bool hasSpecialChar = Regex.IsMatch(password, "[^a-zA-Z0-9]");
 
-        return hasUpperCase && hasLowerCase && hasDigit && hasSpecialChar;
+        if (!(hasUpperCase && hasLowerCase && hasDigit && hasSpecialChar))
+            throw new InvalidDataException("A senha não segue os padrões impostos para ser considerada forte!");
+
+        new Password(password);
     }
 }
